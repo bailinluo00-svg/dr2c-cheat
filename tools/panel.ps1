@@ -67,7 +67,7 @@ public class DR2CTrainer : Form
     private Label lblTitle;
     private Label lblStatus;
     private Label lblMod;
-    private Label lblHint;
+    private ToolTip tips;
     private CheckBox cbRes;
     private CheckBox cbHeal;
     private CheckBox cbCar;
@@ -97,7 +97,7 @@ public class DR2CTrainer : Form
 
     public DR2CTrainer()
     {
-        Text = "DR2C Trainer v0.1.1";
+        Text = "DR2C Trainer v0.1.2";
         ClientSize = new Size(400, 672);
         FormBorderStyle = FormBorderStyle.FixedSingle;
         MaximizeBox = false;
@@ -144,12 +144,8 @@ public class DR2CTrainer : Form
         btnInstall = MakeButton("安装 / 更新 Mod", 14, 456, 176, 34, false);
         btnUninstall = MakeButton("卸载 Mod", 210, 456, 176, 34, false);
 
-        lblHint = new Label();
-        lblHint.Text = "热键只保留 Ctrl+0~3，Ctrl+4~9 未占用。\r\n"
-                     + "面板按钮通过游戏控制台执行，点击时控制台会短暂出现。\r\n"
-                     + "Ctrl+0 不含佐博点；佐博点会写入 gstats.save（安装时已备份）。";
-        lblHint.ForeColor = Color.FromArgb(130, 134, 146);
-        lblHint.SetBounds(14, 500, 372, 50);
+        tips = new ToolTip();
+        tips.SetToolTip(btnZombo, "会写入 gstats.save（安装时已备份）");
 
         txtLog = new TextBox();
         txtLog.Multiline = true;
@@ -159,7 +155,7 @@ public class DR2CTrainer : Form
         txtLog.ForeColor = Color.FromArgb(132, 210, 140);
         txtLog.BorderStyle = BorderStyle.FixedSingle;
         txtLog.Font = new Font("Consolas", 8.25f);
-        txtLog.SetBounds(14, 550, 372, 110);
+        txtLog.SetBounds(14, 500, 372, 160);
 
         Controls.Add(lblTitle);
         Controls.Add(accent);
@@ -182,7 +178,6 @@ public class DR2CTrainer : Form
         Controls.Add(btnStop);
         Controls.Add(btnInstall);
         Controls.Add(btnUninstall);
-        Controls.Add(lblHint);
         Controls.Add(txtLog);
 
         cbRes.CheckedChanged += OnResChanged;

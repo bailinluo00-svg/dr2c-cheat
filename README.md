@@ -6,7 +6,7 @@
 No process injection · No memory editing · Effects last only for the current session</p>
 
 <p>
-  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/version-0.1.1-brightgreen?style=flat-square" alt="Version"></a>
+  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/version-0.1.2-brightgreen?style=flat-square" alt="Version"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="License"></a>
   <img src="https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-lightgrey?style=flat-square" alt="Platform">
   <img src="https://img.shields.io/badge/PowerShell-5.1%2B-5391FE?style=flat-square&amp;logo=powershell&amp;logoColor=white" alt="PowerShell">
@@ -156,6 +156,7 @@ dr2c-trainer/
 │  ├─ panel.ps1                WinForms panel (embedded C#, compiled in memory)
 │  └─ unblock.ps1              batch unblock
 ├─ docs/
+│  ├─ main-menu.png            game main menu screenshot
 │  └─ panel.png                panel screenshot used by the README
 ├─ backup/                     save backups created on install (ignored by .gitignore)
 ├─ README.md                   English documentation (GitHub front page)

@@ -6,7 +6,7 @@
 不注入进程 · 不修改内存 · 效果仅在当前游戏会话内有效</p>
 
 <p>
-  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/version-0.1.1-brightgreen?style=flat-square" alt="版本"></a>
+  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/version-0.1.2-brightgreen?style=flat-square" alt="版本"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="许可"></a>
   <img src="https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-lightgrey?style=flat-square" alt="平台">
   <img src="https://img.shields.io/badge/PowerShell-5.1%2B-5391FE?style=flat-square&amp;logo=powershell&amp;logoColor=white" alt="PowerShell">
@@ -157,6 +157,7 @@ dr2c-trainer/
 │  ├─ panel.ps1                WinForms 面板（C# 内嵌，内存编译）
 │  └─ unblock.ps1              批量解除锁定
 ├─ docs/
+│  ├─ main-menu.png            游戏主界面截图
 │  └─ panel.png                面板截图，供 README 使用
 ├─ backup/                     安装时自动生成的存档备份（已在 .gitignore 中忽略）
 ├─ README.md                   英文说明（GitHub 主页）
