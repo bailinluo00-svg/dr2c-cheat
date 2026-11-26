@@ -1,4 +1,4 @@
-# Death Road to Canada · 作弊 Trainer（纯脚本版）
+# Death Road to Canada · 作弊 Trainer
 
 一款给单机游戏 **Death Road to Canada**（死亡之路，Steam 正式版）用的修改器。
 全部由 PowerShell 脚本 + 游戏自带的 `deathforth` 脚本引擎实现，**不注入进程、不修改存档**。
