@@ -1,0 +1,19 @@
+# 运行期产物：存档备份包含个人游戏进度，禁止提交
+backup/
+
+# 脚本运行/自检输出
+install.log
+selftest.txt
+selftest.flag
+
+# 打包文件
+*.zip
+*.7z
+*.rar
+
+# 系统与编辑器杂物
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp

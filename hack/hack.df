@@ -1,0 +1,155 @@
+\ ============================================================
+\  DR2C CHEAT - hack.df  (v1.9)
+\  Installed at: deathforth\hack\hack.df
+\  Loaded by boot.df via: load? hack/hack.df
+\
+\  Key facts (verified on JUN-20-2024.10.25):
+\    pchar            = CHARACTER (no .wielded / .fatigue)
+\    pchar .thing@    = its THING   (has .wielded / .fatigue)
+\    weapondef{ <id> sel ... } selects a weapon definition
+\    LOOT_* / trunk.loot! / foreach-team-char are global
+\
+\  Effects are session-only: nothing here writes a save file.
+\  Deleting this file restores vanilla behaviour.
+\ ============================================================
+
+1 console!
+
+\ ---------- Ctrl+1 : top up the trunk ----------
+\ trunk.loot! is ( amount loot -- )
+: cheat-res
+    500 LOOT_FOOD trunk.loot!
+    500 LOOT_GAS trunk.loot!
+    500 LOOT_MEDICAL trunk.loot!
+    300 LOOT_BULLET trunk.loot!
+    300 LOOT_SHOTGUN_SHELL trunk.loot!
+    300 LOOT_RIFLE_SHELL trunk.loot!
+    100 LOOT_JUNK trunk.loot!
+;
+' cheat-res 1 hotkey!
+
+\ ---------- Ctrl+2 : full heal the whole team ----------
+: cheat-heal
+    ' .fullheal foreach-team-char
+;
+' cheat-heal 2 hotkey!
+
+\ ---------- Ctrl+3 : weapon never breaks (whole team) ----------
+: nobreak-one ( ch -- )
+    dup .thing@ 0= if drop exit then
+    .thing@ weapondef{ dup .wielded sel 0 melee_break_scale! } drop
+;
+: cheat-nobreak ' nobreak-one foreach-team-char ;
+' cheat-nobreak 3 hotkey!
+
+\ ---------- Ctrl+4 : no stamina (whole team) ----------
+\ Zero the weapon's stamina multiplier AND clear current fatigue.
+: nostam-one ( ch -- )
+    dup .thing@ 0= if drop exit then
+    .thing@
+    dup 0 swap .fatigue!
+    weapondef{ dup .wielded sel 0 melee_fatigue_scale! }
+    drop
+;
+: cheat-nostam ' nostam-one foreach-team-char ;
+' cheat-nostam 4 hotkey!
+
+\ ---------- Ctrl+5 : one hit kill (whole team) ----------
+\ Weapon power drives the instakill roll: 2.5 PWR is about an
+\ 80% instakill against a 5 HP zombie, so 10 is a guaranteed kill.
+: ohk-one ( ch -- )
+    dup .thing@ 0= if drop exit then
+    .thing@
+    weapondef{ dup .wielded sel 10 power! }
+    weapondef{ dup .wielded sel 10 shot_power! }
+    drop
+;
+: cheat-ohk ' ohk-one foreach-team-char ;
+' cheat-ohk 5 hotkey!
+
+\ ---------- Ctrl+6 : car indestructible ----------
+\ car-chassis / car-max-chassis and car-engine / car-max-engine are global
+\ values (carstats.df). Crashes, roadblocks and driving wear subtract from
+\ them (car-chassis+ / car-tune+), so we top both back up on the road tick and
+\ on every event state change / options draw.
+0 value veh-god?
+
+: veh-guard
+    veh-god? if
+        car-max-chassis 8 < if 8 to car-max-chassis then
+        car-chassis car-max-chassis <
+        car-engine car-max-engine <
+        or if
+            car-max-chassis to car-chassis
+            car-max-engine to car-engine
+            car-update-display
+        then
+    then
+;
+
+: veh-tick amend main-event-road-tick
+    veh-guard
+;
+last to main-event-road-tick
+
+: veh-resume amend main-event-road-resume
+    veh-guard
+;
+last to main-event-road-resume
+
+: veh-cstart amend main-event-cyoa-start
+    veh-guard
+;
+last to main-event-cyoa-start
+
+: veh-cend amend main-event-cyoa-end
+    veh-guard
+;
+last to main-event-cyoa-end
+
+: veh-cresume amend main-event-cyoa-resume
+    veh-guard
+;
+last to main-event-cyoa-resume
+
+: veh-options amend main-event-do-options
+    veh-guard
+;
+last to main-event-do-options
+
+: veh-info amend main-event-do-info
+    veh-guard
+;
+last to main-event-do-info
+
+: veh-title amend main-event-do-title
+    veh-guard
+;
+last to main-event-do-title
+
+: cheat-car
+    veh-god? not to veh-god?
+    veh-god? if
+        car-max-chassis 8 < if 8 to car-max-chassis then
+        car-max-chassis to car-chassis
+        car-max-engine to car-engine
+        car-update-display
+        goodfx "CAR INDESTRUCTIBLE ON" msg
+    else
+        "CAR INDESTRUCTIBLE OFF" msg
+    then
+;
+' cheat-car 6 hotkey!
+
+\ ---------- Ctrl+0 : everything at once ----------
+: cheat-all
+    cheat-res
+    cheat-heal
+    cheat-nobreak
+    cheat-nostam
+    cheat-ohk
+    veh-god? 0= if cheat-car then
+;
+' cheat-all 0 hotkey!
+
+

@@ -1,0 +1,11 @@
+# 统一换行，避免 Windows 批处理在 Linux/macOS 克隆后变成 LF 而执行异常
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+*.df  text eol=lf
+*.md  text eol=lf
+*.txt text eol=lf
+
+# 二进制
+*.png binary
+*.jpg binary
+*.zip binary
