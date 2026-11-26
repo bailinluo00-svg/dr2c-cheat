@@ -2,29 +2,61 @@ $ErrorActionPreference = 'Stop'
 
 $root = Split-Path -Parent $PSScriptRoot
 
-function Find-Game {
-    $candidates = @(
-        "D:\Program Files (x86)\Steam\steamapps\common\DeathRoadToCanada",
-        "C:\Program Files (x86)\Steam\steamapps\common\DeathRoadToCanada",
-        "C:\Program Files\Steam\steamapps\common\DeathRoadToCanada"
-    )
+function Test-Dir([string]$path) {
+    if ([string]::IsNullOrWhiteSpace($path)) { return $false }
+    try { return [System.IO.Directory]::Exists($path) } catch { return $false }
+}
+
+function Add-Candidate($list, [string]$path) {
+    if (-not (Test-Dir $path)) { return }
+    foreach ($c in $list) { if ($c -eq $path) { return } }
+    [void]$list.Add($path)
+}
+
+function Get-SteamRoots {
+    $roots = New-Object System.Collections.ArrayList
     $steam = $null
     try { $steam = (Get-ItemProperty 'HKCU:\Software\Valve\Steam' -ErrorAction Stop).SteamPath } catch { }
     if (-not $steam) {
         try { $steam = (Get-ItemProperty 'HKLM:\SOFTWARE\WOW6432Node\Valve\Steam' -ErrorAction Stop).InstallPath } catch { }
     }
-    if ($steam) {
-        $candidates += (Join-Path $steam 'steamapps\common\DeathRoadToCanada')
-        $lf = Join-Path $steam 'steamapps\libraryfolders.vdf'
-        if (Test-Path $lf) {
-            foreach ($m in [regex]::Matches((Get-Content $lf -Raw), '"path"\s*"([^"]+)"')) {
-                $lib = $m.Groups[1].Value -replace '\\\\', '\'
-                $candidates += (Join-Path $lib 'steamapps\common\DeathRoadToCanada')
-            }
+    if ($steam) { Add-Candidate $roots (($steam -replace '/', '\').TrimEnd('\')) }
+
+    foreach ($p in @(
+        'C:\Program Files (x86)\Steam',
+        'C:\Program Files\Steam',
+        'D:\Program Files (x86)\Steam',
+        'D:\Steam'
+    )) { Add-Candidate $roots $p }
+    return $roots
+}
+
+function Find-Game {
+    $candidates = New-Object System.Collections.ArrayList
+    $roots = Get-SteamRoots
+
+    foreach ($r in $roots) {
+        Add-Candidate $candidates (Join-Path $r 'steamapps\common\DeathRoadToCanada')
+    }
+
+    foreach ($r in $roots) {
+        $lf = Join-Path $r 'steamapps\libraryfolders.vdf'
+        if (-not (Test-Path -LiteralPath $lf)) { continue }
+        try { $raw = Get-Content -LiteralPath $lf -Raw -ErrorAction Stop } catch { continue }
+        foreach ($m in [regex]::Matches($raw, '"path"\s*"([^"]+)"')) {
+            $lib = $m.Groups[1].Value -replace '\\\\', '\' -replace '/', '\'
+            if (-not (Test-Dir $lib)) { continue }
+            Add-Candidate $candidates ([System.IO.Path]::Combine($lib, 'steamapps\common\DeathRoadToCanada'))
         }
     }
+
+    foreach ($p in @(
+        'E:\SteamLibrary\steamapps\common\DeathRoadToCanada',
+        'D:\SteamLibrary\steamapps\common\DeathRoadToCanada'
+    )) { Add-Candidate $candidates $p }
+
     foreach ($c in $candidates) {
-        if (Test-Path (Join-Path $c 'deathforth\boot.df')) { return $c }
+        if (Test-Path -LiteralPath (Join-Path $c 'deathforth\boot.df')) { return $c }
     }
     return $null
 }

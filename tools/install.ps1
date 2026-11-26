@@ -3,32 +3,67 @@
 $root = Split-Path -Parent $PSScriptRoot
 $srcDf = Join-Path $root 'hack\hack.df'
 
-function Find-Game {
-    $candidates = New-Object System.Collections.ArrayList
-    [void]$candidates.Add("D:\Program Files (x86)\Steam\steamapps\common\DeathRoadToCanada")
-    [void]$candidates.Add("C:\Program Files (x86)\Steam\steamapps\common\DeathRoadToCanada")
-    [void]$candidates.Add("C:\Program Files\Steam\steamapps\common\DeathRoadToCanada")
-    [void]$candidates.Add("E:\SteamLibrary\steamapps\common\DeathRoadToCanada")
-    [void]$candidates.Add("D:\SteamLibrary\steamapps\common\DeathRoadToCanada")
+function Test-Dir([string]$path) {
+    if ([string]::IsNullOrWhiteSpace($path)) { return $false }
+    try { return [System.IO.Directory]::Exists($path) } catch { return $false }
+}
 
+function Add-Candidate($list, [string]$path) {
+    if (-not (Test-Dir $path)) { return }
+    foreach ($c in $list) { if ($c -eq $path) { return } }
+    [void]$list.Add($path)
+}
+
+function Get-SteamRoots {
+    $roots = New-Object System.Collections.ArrayList
     $steam = $null
     try { $steam = (Get-ItemProperty 'HKCU:\Software\Valve\Steam' -ErrorAction Stop).SteamPath } catch { }
     if (-not $steam) {
         try { $steam = (Get-ItemProperty 'HKLM:\SOFTWARE\WOW6432Node\Valve\Steam' -ErrorAction Stop).InstallPath } catch { }
     }
-    if ($steam) {
-        [void]$candidates.Add((Join-Path $steam 'steamapps\common\DeathRoadToCanada'))
-        $lf = Join-Path $steam 'steamapps\libraryfolders.vdf'
-        if (Test-Path $lf) {
-            foreach ($m in [regex]::Matches((Get-Content $lf -Raw), '"path"\s*"([^"]+)"')) {
-                $lib = $m.Groups[1].Value -replace '\\\\', '\'
-                [void]$candidates.Add((Join-Path $lib 'steamapps\common\DeathRoadToCanada'))
-            }
+    if ($steam) { Add-Candidate $roots (($steam -replace '/', '\').TrimEnd('\')) }
+
+    # Fall back to the usual default install locations.
+    foreach ($p in @(
+        'C:\Program Files (x86)\Steam',
+        'C:\Program Files\Steam',
+        'D:\Program Files (x86)\Steam',
+        'D:\Steam'
+    )) { Add-Candidate $roots $p }
+    return $roots
+}
+
+function Find-Game {
+    $candidates = New-Object System.Collections.ArrayList
+    $roots = Get-SteamRoots
+
+    # 1) default library inside every known Steam root (always tried first)
+    foreach ($r in $roots) {
+        Add-Candidate $candidates (Join-Path $r 'steamapps\common\DeathRoadToCanada')
+    }
+
+    # 2) extra libraries from libraryfolders.vdf, validated one by one
+    foreach ($r in $roots) {
+        $lf = Join-Path $r 'steamapps\libraryfolders.vdf'
+        if (-not (Test-Path -LiteralPath $lf)) { continue }
+        try { $raw = Get-Content -LiteralPath $lf -Raw -ErrorAction Stop } catch { continue }
+        foreach ($m in [regex]::Matches($raw, '"path"\s*"([^"]+)"')) {
+            $lib = $m.Groups[1].Value -replace '\\\\', '\' -replace '/', '\'
+            # Check the drive / folder before building any path, so a stale
+            # entry such as E:\ on a machine without E: is simply skipped.
+            if (-not (Test-Dir $lib)) { continue }
+            Add-Candidate $candidates ([System.IO.Path]::Combine($lib, 'steamapps\common\DeathRoadToCanada'))
         }
     }
 
+    # 3) last-resort custom library guesses
+    foreach ($p in @(
+        'E:\SteamLibrary\steamapps\common\DeathRoadToCanada',
+        'D:\SteamLibrary\steamapps\common\DeathRoadToCanada'
+    )) { Add-Candidate $candidates $p }
+
     foreach ($c in $candidates) {
-        if (Test-Path (Join-Path $c 'deathforth\boot.df')) { return $c }
+        if (Test-Path -LiteralPath (Join-Path $c 'deathforth\boot.df')) { return $c }
     }
     return $null
 }
@@ -41,7 +76,7 @@ if (-not (Test-Path $srcDf)) { Write-Host "ERROR: missing $srcDf" -ForegroundCol
 $game = Find-Game
 if (-not $game) {
     Write-Host 'ERROR: Death Road to Canada not found.' -ForegroundColor Red
-    Write-Host 'Open tools\install.ps1 and add your game path to $candidates.'
+    Write-Host 'Open tools\install.ps1 and add your Steam folder to Get-SteamRoots.'
     exit 1
 }
 Write-Host "Game folder: $game"
