@@ -1,6 +1,6 @@
 <div align="center">
 
-<h1>Death Road to Canada · 作弊 Trainer</h1>
+<h1>Death Road to Canada · 修改器</h1>
 
 <p><b>基于 PowerShell + <code>deathforth</code> 的单机修改器（Steam 正式版）</b><br>
 不注入进程 · 不修改内存 · 效果仅在当前游戏会话内有效</p>
@@ -35,6 +35,15 @@
 ---
 
 ## 截图
+
+<div align="center">
+  <img src="docs/main-menu.png" alt="Death Road to Canada 游戏主界面" width="640">
+  <br>
+  <em>游戏主界面。</em>
+</div>
+
+<br>
+<br>
 
 <div align="center">
   <img src="docs/panel.png" alt="DR2C Trainer 面板" width="420">
@@ -133,7 +142,7 @@
 ## 目录结构
 
 ```
-dr2c-cheat/
+dr2c-trainer/
 ├─ install.bat                 安装（复制 hack.df 到游戏目录，并备份存档）
 ├─ uninstall.bat               卸载（仅删除 hack.df）
 ├─ start-panel.bat             启动面板（英文别名）

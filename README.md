@@ -1,6 +1,6 @@
 <div align="center">
 
-<h1>Death Road to Canada · Cheat Trainer</h1>
+<h1>Death Road to Canada · Trainer</h1>
 
 <p><b>A PowerShell + <code>deathforth</code> trainer for the single-player Steam release.</b><br>
 No process injection · No memory editing · Effects last only for the current session</p>
@@ -30,11 +30,20 @@ It is built entirely from PowerShell scripts plus the game's built-in `deathfort
 - Delete `deathforth\hack\hack.df` to return to vanilla.
 
 > **Table of contents**
-> [Screenshot](#screenshot) · [Supported game version](#supported-game-version) · [Features and hotkeys](#features-and-hotkeys) · [Panel buttons](#panel-buttons) · [Installation](#installation) · [Usage](#usage) · [Uninstallation](#uninstallation) · [Script warnings](#script-warnings) · [Repository layout](#repository-layout) · [Disclaimer](#disclaimer) · [License](#license)
+> [Screenshots](#screenshots) · [Supported game version](#supported-game-version) · [Features and hotkeys](#features-and-hotkeys) · [Panel buttons](#panel-buttons) · [Installation](#installation) · [Usage](#usage) · [Uninstallation](#uninstallation) · [Script warnings](#script-warnings) · [Repository layout](#repository-layout) · [Disclaimer](#disclaimer) · [License](#license)
 
 ---
 
-## Screenshot
+## Screenshots
+
+<div align="center">
+  <img src="docs/main-menu.png" alt="Death Road to Canada main menu" width="640">
+  <br>
+  <em>The game's main menu.</em>
+</div>
+
+<br>
+<br>
 
 <div align="center">
   <img src="docs/panel.png" alt="DR2C Trainer panel" width="420">
@@ -132,7 +141,7 @@ Functions without a hotkey live on the panel as one-click buttons.
 ## Repository layout
 
 ```
-dr2c-cheat/
+dr2c-trainer/
 ├─ install.bat                 install (copies hack.df into the game folder and backs up saves)
 ├─ uninstall.bat               uninstall (removes only hack.df)
 ├─ start-panel.bat             launch the panel (English alias)
