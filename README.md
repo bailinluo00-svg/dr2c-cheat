@@ -1,93 +1,96 @@
-# Death Road to Canada · 作弊 Trainer
+**English** | [简体中文](README.zh-CN.md)
 
-> 当前版本：**0.1.0** ｜ 适用游戏：**Death Road to Canada**（Steam 正式版，实测 JUN-20-2024.10.25）
+# Death Road to Canada · Cheat Trainer
 
-一款给单机游戏 **Death Road to Canada**（死亡之路，Steam 正式版）用的修改器。
-全部由 PowerShell 脚本 + 游戏自带的 `deathforth` 脚本引擎实现，**不注入进程、不修改存档**。
+> Version: **0.1.0** ｜ Game: **Death Road to Canada** (Steam release, tested on JUN-20-2024.10.25)
 
-- 面板界面在内存中编译运行。
-- 所有效果只存在于当前游戏会话，退出游戏即完全还原。
-- 删除 `deathforth\hack\hack.df` 即可回到原版。
+A trainer for the single-player game **Death Road to Canada** (Steam release).
+It is built entirely from PowerShell scripts plus the game's built-in `deathforth` script engine: **no process injection, no save-file modification**.
 
-## 适用游戏版本
+- The panel UI is compiled and run in memory.
+- Every effect exists only in the current game session and is fully reverted when you quit.
+- Delete `deathforth\hack\hack.df` to return to vanilla.
 
-- 游戏：**Death Road to Canada**（Steam 正式版）
-- 实测版本：**JUN-20-2024.10.25**（其他版本可能可用，也可能因脚本接口变化而失效）
-- 仅支持 Windows，依赖游戏自带的 `deathforth` 目录与 `boot.df`。
+## Supported game version
 
-## 功能与热键
+- Game: **Death Road to Canada** (Steam release)
+- Tested version: **JUN-20-2024.10.25** (other versions may work, or may break if the script API changes)
+- Windows only; requires the game's built-in `deathforth` folder and `boot.df`.
 
-| 热键 | 功能 |
+## Features and hotkeys
+
+| Hotkey | Feature |
 | --- | --- |
-| `Ctrl+1` | 无限资源：食物 / 汽油 / 医疗包补到 500，子弹 / 霰弹 / 步枪弹补到 300 |
-| `Ctrl+2` | 全队回满血 |
-| `Ctrl+3` | 武器永不损坏 |
-| `Ctrl+4` | 挥武器不耗体力 |
-| `Ctrl+5` | 一击必杀 |
-| `Ctrl+6` | 载具无限耐久：底盘和引擎锁满（撞车 / 路障 / 行驶磨损都不掉） |
-| `Ctrl+0` | 一键全开（依次执行上面六项） |
+| `Ctrl+1` | Infinite resources: food / gas / medical up to 500, bullets / shotgun shells / rifle shells up to 300 |
+| `Ctrl+2` | Full heal for the whole team |
+| `Ctrl+3` | Weapons never break |
+| `Ctrl+4` | Swinging weapons costs no stamina |
+| `Ctrl+5` | One-hit kill |
+| `Ctrl+6` | Indestructible vehicle: chassis and engine locked at max (immune to crashes / roadblocks / driving wear) |
+| `Ctrl+0` | Enable everything at once (runs the six above in order) |
 
-- 以上除 `Ctrl+6` 外都是幂等设置，可反复按；换武器后再按一次即可。
-- `Ctrl+6` 是开关：第一次按开启，再按一次关闭。小底盘车开启时会把耐久上限抬到 8，避免一次撞击直接撞毁。
-- 热键直接以窗口消息投递给游戏窗口，**不需要打开或关闭游戏内控制台**。
+- All settings except `Ctrl+6` are idempotent and can be pressed repeatedly; press again after switching weapons.
+- `Ctrl+6` is a toggle: press once to enable, press again to disable. For small-chassis cars it raises the durability cap to 8 so a single crash cannot destroy them.
+- Hotkeys are delivered directly to the game window as window messages; **you do not need to open or close the in-game console**.
 
-## 安装
+## Installation
 
-1. 先关闭游戏。
-2. 双击 `install.bat`（若安装在 `Program Files` 下可能需要右键「以管理员身份运行」）。
-3. 看到 `Installed:` 字样即成功，存档会自动备份到 `backup\`。
-4. 重新启动一次游戏后生效。
+1. Close the game first.
+2. Double-click `install.bat` (if the game is under `Program Files`, you may need to right-click → "Run as administrator").
+3. Seeing `Installed:` means success; saves are backed up to `backup\` automatically.
+4. Restart the game once for it to take effect.
 
-## 使用
+## Usage
 
-1. 先通过 Steam 启动游戏，进入主菜单。
-2. 双击 `start-panel.bat`（或 `启动面板.bat`）。
-3. 面板顶部显示「已连接 DR2C 窗口」后，勾选需要的功能即可，勾选项会周期性自动重发。
-4. 也可以不开面板，直接在游戏里按 `Ctrl+1..6`、`Ctrl+0`。
+1. Launch the game through Steam and reach the main menu.
+2. Double-click `start-panel.bat` (or `启动面板.bat`).
+3. When the panel reports a connected DR2C window, tick the features you want; ticked features are re-sent periodically.
+4. You can also skip the panel and press `Ctrl+1..6` or `Ctrl+0` in-game.
 
-> 若双击 `.bat` 没反应，请右键「以管理员身份运行」。
+> If double-clicking a `.bat` does nothing, right-click it and choose "Run as administrator".
 
-## 卸载
+## Uninstallation
 
-1. 先关闭游戏。
-2. 双击 `uninstall.bat`，只删除 `deathforth\hack\hack.df`，游戏立即回到原版。
-   （若该目录为空会一并删除；目录内其他 mod 文件不会被误删。）
-3. 本工具不改存档；如需恢复安装前的存档，从 `backup\` 拷回即可。
+1. Close the game first.
+2. Double-click `uninstall.bat`. It removes only `deathforth\hack\hack.df`, returning the game to vanilla immediately. (The folder is removed as well if it becomes empty; other mod files inside it are left untouched.)
+3. This tool never modifies saves; to restore the pre-install save, copy it back from `backup\`.
 
-## 关于脚本被提示不受信任
+## About "untrusted script" warnings
 
-- 从网络下载的 `.ps1` / `.bat` 会带有「网络来源」标记，部分环境下 PowerShell / SmartScreen 会提示「此脚本不受信任」并拦截执行；这不是病毒，可右键文件 → 属性 → 勾选「解除锁定」，或直接运行 `unblock.bat`（`解除锁定.bat`）批量解除。
-- 脚本使用 `-ExecutionPolicy Bypass` 仅用于临时绕过本地执行策略以运行本工具，不修改系统全局策略。
+- `.ps1` / `.bat` files downloaded from the internet carry the Mark-of-the-Web, so PowerShell / SmartScreen may warn that "this script is not trusted" and block execution. This is not a virus: right-click the file → Properties → tick "Unblock", or run `unblock.bat` (`解除锁定.bat`) to unblock everything at once.
+- The scripts use `-ExecutionPolicy Bypass` only to temporarily bypass the local execution policy for this tool; they do not change the system-wide policy.
 
-## 目录结构
+## Repository layout
 
 ```
 dr2c-cheat/
-├─ install.bat                 安装（复制 hack.df 到游戏目录，并备份存档）
-├─ uninstall.bat               卸载（仅删除 hack.df）
-├─ start-panel.bat             启动面板（英文别名）
-├─ 启动面板.bat                 启动面板（中文原名，内容相同）
-├─ unblock.bat                 解除文件网络锁定（英文别名）
-├─ 解除锁定.bat                 解除文件网络锁定（中文原名，内容相同）
+├─ install.bat                 install (copies hack.df into the game folder and backs up saves)
+├─ uninstall.bat               uninstall (removes only hack.df)
+├─ start-panel.bat             launch the panel (English alias)
+├─ 启动面板.bat                 launch the panel (original Chinese name, same content)
+├─ unblock.bat                 remove the Mark-of-the-Web (English alias)
+├─ 解除锁定.bat                 remove the Mark-of-the-Web (original Chinese name, same content)
 ├─ hack/
-│  └─ hack.df                  游戏内脚本，安装时复制到 deathforth\hack\
+│  └─ hack.df                  in-game script, copied to deathforth\hack\ on install
 ├─ tools/
-│  ├─ install.ps1              安装逻辑
-│  ├─ uninstall.ps1            卸载逻辑
-│  ├─ panel.ps1                WinForms 面板（C# 内嵌，内存编译）
-│  └─ unblock.ps1              批量解除锁定
-├─ backup/                     安装时自动生成的存档备份（已在 .gitignore 中忽略）
-├─ README.md
+│  ├─ install.ps1              install logic
+│  ├─ uninstall.ps1            uninstall logic
+│  ├─ panel.ps1                WinForms panel (embedded C#, compiled in memory)
+│  └─ unblock.ps1              batch unblock
+├─ backup/                     save backups created on install (ignored by .gitignore)
+├─ README.md                   English documentation (GitHub front page)
+├─ README.zh-CN.md             Chinese documentation
+├─ CHANGELOG.md                changelog
 └─ LICENSE
 ```
 
-## 免责声明
+## Disclaimer
 
-- 本工具仅用于**单机 / 离线**模式，请勿用于联机、排行榜或任何多人场景。
-- 请支持正版游戏。使用本工具造成的存档异常、成就失效、游戏崩溃或其他任何后果，由使用者自行承担。
-- 本项目与游戏开发商、发行商及 Valve / Steam 无任何关联。
-- 本工具不收集、不上传任何数据，也不修改游戏存档文件。
+- This tool is for **single-player / offline** use only. Do not use it in multiplayer, leaderboards, or any other online scenario.
+- Please support the official game. You are responsible for any consequences such as save corruption, disabled achievements, crashes, or anything else caused by using this tool.
+- This project is not affiliated with the game's developer, publisher, or Valve / Steam.
+- This tool collects and uploads no data, and does not modify game save files.
 
-## 许可证
+## License
 
 [MIT](LICENSE)
