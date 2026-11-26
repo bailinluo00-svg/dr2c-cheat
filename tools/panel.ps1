@@ -48,14 +48,15 @@ public class DR2CTrainer : Form
 
     private const uint WM_KEYDOWN = 0x0100;
     private const uint WM_KEYUP = 0x0101;
+    private const uint WM_CHAR = 0x0102;
     private const int VK_CONTROL = 0x11;
+    private const int VK_RETURN = 0x0D;
 
+    private const int HK_ALL = 0;
     private const int HK_RES = 1;
     private const int HK_HEAL = 2;
-    private const int HK_NOBREAK = 3;
-    private const int HK_NOSTAM = 4;
-    private const int HK_OHK = 5;
-    private const int HK_CAR = 6;
+    private const int HK_CAR = 3;
+    private const int HK_CONSOLE = 9;
 
     private const string MOD_DIR = "deathforth\\hack";
     private const string MOD_FILE = "hack.df";
@@ -69,10 +70,14 @@ public class DR2CTrainer : Form
     private Label lblHint;
     private CheckBox cbRes;
     private CheckBox cbHeal;
-    private CheckBox cbNoBreak;
-    private CheckBox cbNoStam;
-    private CheckBox cbOhk;
     private CheckBox cbCar;
+    private Button btnNoBreak;
+    private Button btnNoStam;
+    private Button btnOhk;
+    private Button btnMorale;
+    private Button btnZombo;
+    private Button btnChassis;
+    private Button btnEngine;
     private Button btnAll;
     private Button btnStop;
     private Button btnInstall;
@@ -82,19 +87,18 @@ public class DR2CTrainer : Form
     private Timer tick;
     private DateTime nextRes = DateTime.MinValue;
     private DateTime nextHeal = DateTime.MinValue;
-    private DateTime nextNoBreak = DateTime.MinValue;
-    private DateTime nextNoStam = DateTime.MinValue;
-    private DateTime nextOhk = DateTime.MinValue;
     private DateTime nextStatus = DateTime.MinValue;
 
+    private bool chassisOn;
+    private bool engineOn;
     private bool busy;
     private volatile bool sending;
     private readonly object sendLock = new object();
 
     public DR2CTrainer()
     {
-        Text = "DR2C Trainer v0.1.0";
-        ClientSize = new Size(400, 588);
+        Text = "DR2C Trainer v0.1.1";
+        ClientSize = new Size(400, 672);
         FormBorderStyle = FormBorderStyle.FixedSingle;
         MaximizeBox = false;
         BackColor = Color.FromArgb(24, 26, 30);
@@ -120,26 +124,32 @@ public class DR2CTrainer : Form
         lblMod.ForeColor = Color.FromArgb(140, 144, 156);
         lblMod.SetBounds(14, 69, 372, 18);
 
-        Label cap1 = MakeCaption("功能  (勾选即生效，自动保持)", 96);
+        Label cap1 = MakeCaption("热键功能  (勾选即生效，自动保持)", 96);
         cbRes = MakeCheck("无限资源", "(Ctrl+1)", 120);
         cbHeal = MakeCheck("全队回满血", "(Ctrl+2)", 146);
-        cbNoBreak = MakeCheck("武器永不损坏", "(Ctrl+3)", 172);
-        cbNoStam = MakeCheck("挥武器不耗体力", "(Ctrl+4)", 198);
-        cbOhk = MakeCheck("一击必杀", "(Ctrl+5)", 224);
-        cbCar = MakeCheck("载具无限耐久（底盘+引擎）", "(Ctrl+6)", 250);
+        cbCar = MakeCheck("载具耐久：底盘 + 引擎", "(Ctrl+3)", 172);
 
-        Label cap2 = MakeCaption("维护", 282);
-        btnAll = MakeButton("一键全开", 14, 306, 176, 34, true);
-        btnStop = MakeButton("全部停止", 210, 306, 176, 34, false);
-        btnInstall = MakeButton("安装 / 更新 Mod", 14, 346, 176, 34, false);
-        btnUninstall = MakeButton("卸载 Mod", 210, 346, 176, 34, false);
+        Label cap2 = MakeCaption("面板按钮  (无热键，点一次执行一次)", 204);
+        btnNoBreak = MakeButton("武器永不损坏", 14, 228, 176, 34, false);
+        btnOhk = MakeButton("一击必杀", 210, 228, 176, 34, false);
+        btnNoStam = MakeButton("不耗体力 + 清疲劳", 14, 268, 176, 34, false);
+        btnMorale = MakeButton("全体士气拉满", 210, 268, 176, 34, false);
+        btnChassis = MakeButton("底盘：关", 14, 308, 176, 34, false);
+        btnEngine = MakeButton("引擎：关", 210, 308, 176, 34, false);
+        btnZombo = MakeButton("佐博点 +999", 14, 348, 176, 34, true);
+
+        Label cap3 = MakeCaption("维护", 392);
+        btnAll = MakeButton("一键全开  (Ctrl+0)", 14, 416, 176, 34, true);
+        btnStop = MakeButton("全部停止", 210, 416, 176, 34, false);
+        btnInstall = MakeButton("安装 / 更新 Mod", 14, 456, 176, 34, false);
+        btnUninstall = MakeButton("卸载 Mod", 210, 456, 176, 34, false);
 
         lblHint = new Label();
-        lblHint.Text = "热键直接投递给游戏窗口，无需打开或关闭控制台。\r\n"
-                     + "勾选的功能会周期性自动重发，进游戏后勾选即可。\r\n"
-                     + "关掉游戏即完全还原，不修改任何存档。";
+        lblHint.Text = "热键只保留 Ctrl+0~3，Ctrl+4~9 未占用。\r\n"
+                     + "面板按钮通过游戏控制台执行，点击时控制台会短暂出现。\r\n"
+                     + "Ctrl+0 不含佐博点；佐博点会写入 gstats.save（安装时已备份）。";
         lblHint.ForeColor = Color.FromArgb(130, 134, 146);
-        lblHint.SetBounds(14, 390, 372, 50);
+        lblHint.SetBounds(14, 500, 372, 50);
 
         txtLog = new TextBox();
         txtLog.Multiline = true;
@@ -149,7 +159,7 @@ public class DR2CTrainer : Form
         txtLog.ForeColor = Color.FromArgb(132, 210, 140);
         txtLog.BorderStyle = BorderStyle.FixedSingle;
         txtLog.Font = new Font("Consolas", 8.25f);
-        txtLog.SetBounds(14, 444, 372, 128);
+        txtLog.SetBounds(14, 550, 372, 110);
 
         Controls.Add(lblTitle);
         Controls.Add(accent);
@@ -158,11 +168,16 @@ public class DR2CTrainer : Form
         Controls.Add(cap1);
         Controls.Add(cbRes);
         Controls.Add(cbHeal);
-        Controls.Add(cbNoBreak);
-        Controls.Add(cbNoStam);
-        Controls.Add(cbOhk);
         Controls.Add(cbCar);
         Controls.Add(cap2);
+        Controls.Add(btnNoBreak);
+        Controls.Add(btnOhk);
+        Controls.Add(btnNoStam);
+        Controls.Add(btnMorale);
+        Controls.Add(btnChassis);
+        Controls.Add(btnEngine);
+        Controls.Add(btnZombo);
+        Controls.Add(cap3);
         Controls.Add(btnAll);
         Controls.Add(btnStop);
         Controls.Add(btnInstall);
@@ -172,10 +187,14 @@ public class DR2CTrainer : Form
 
         cbRes.CheckedChanged += OnResChanged;
         cbHeal.CheckedChanged += OnHealChanged;
-        cbNoBreak.CheckedChanged += OnNoBreakChanged;
-        cbNoStam.CheckedChanged += OnNoStamChanged;
-        cbOhk.CheckedChanged += OnOhkChanged;
         cbCar.CheckedChanged += OnCarChanged;
+        btnNoBreak.Click += OnNoBreakClick;
+        btnNoStam.Click += OnNoStamClick;
+        btnOhk.Click += OnOhkClick;
+        btnMorale.Click += OnMoraleClick;
+        btnZombo.Click += OnZomboClick;
+        btnChassis.Click += OnChassisClick;
+        btnEngine.Click += OnEngineClick;
         btnAll.Click += OnAll;
         btnStop.Click += OnStop;
         btnInstall.Click += OnInstallClick;
@@ -332,6 +351,85 @@ public class DR2CTrainer : Form
         else Log("发送失败：" + label + "（请右键以管理员身份运行）");
     }
 
+    // ---------------- console channel for panel-only buttons ----------------
+    // Functions without a hotkey are executed by opening the game's own
+    // console (Ctrl+9, PANTEST4) and typing a df command into it.
+
+    private void TypeTextTo(IntPtr target, string text)
+    {
+        for (int i = 0; i < 12; i++)
+        {
+            PostMessage(target, WM_CHAR, (IntPtr)8, IntPtr.Zero);
+            System.Threading.Thread.Sleep(40);
+        }
+        foreach (char c in text)
+        {
+            PostMessage(target, WM_CHAR, (IntPtr)c, IntPtr.Zero);
+            System.Threading.Thread.Sleep(60);
+        }
+    }
+
+    private void PressEnter(IntPtr target)
+    {
+        PostKeyTo(target, VK_RETURN, false);
+        System.Threading.Thread.Sleep(80);
+        PostKeyTo(target, VK_RETURN, true);
+        System.Threading.Thread.Sleep(120);
+        PostMessage(target, WM_CHAR, (IntPtr)VK_RETURN, IntPtr.Zero);
+    }
+
+    private void RunConsole(string cmd, string label)
+    {
+        if (!Attach())
+        {
+            Log("游戏未运行，忽略：" + label);
+            return;
+        }
+        IntPtr target = hwnd;
+        System.Threading.ThreadPool.QueueUserWorkItem(delegate
+        {
+            bool got = false;
+            for (int i = 0; i < 30 && !got; i++)
+                got = System.Threading.Monitor.TryEnter(sendLock, 100);
+            if (!got)
+            {
+                LogSafe("上一条命令还没执行完，忽略：" + label);
+                return;
+            }
+            try
+            {
+                SendHotkeyTo(target, HK_CONSOLE);
+                System.Threading.Thread.Sleep(400);
+                TypeTextTo(target, cmd);
+                PressEnter(target);
+                System.Threading.Thread.Sleep(400);
+                TypeTextTo(target, "console-close");
+                PressEnter(target);
+                System.Threading.Thread.Sleep(200);
+                LogSafe("已执行：" + label);
+            }
+            catch (Exception ex)
+            {
+                LogSafe("执行失败：" + label + "：" + ex.Message);
+            }
+            finally
+            {
+                System.Threading.Monitor.Exit(sendLock);
+            }
+        });
+    }
+
+    private void LogSafe(string s)
+    {
+        try
+        {
+            if (txtLog.IsDisposed) return;
+            if (txtLog.InvokeRequired) txtLog.BeginInvoke(new Action<string>(Log), s);
+            else Log(s);
+        }
+        catch { }
+    }
+
     // ---------------- mod install / remove ----------------
 
     private static string FindGameDir()
@@ -473,31 +571,49 @@ public class DR2CTrainer : Form
         else Log("已停止：不死/回血");
     }
 
-    private void OnNoBreakChanged(object sender, EventArgs e)
-    {
-        if (busy) return;
-        if (cbNoBreak.Checked) { SendNow(HK_NOBREAK, "武器不坏"); nextNoBreak = DateTime.Now.AddSeconds(1.5); }
-        else Log("已停止：武器不坏");
-    }
-
-    private void OnNoStamChanged(object sender, EventArgs e)
-    {
-        if (busy) return;
-        if (cbNoStam.Checked) { SendNow(HK_NOSTAM, "不耗体力"); nextNoStam = DateTime.Now.AddMilliseconds(500); }
-        else Log("已停止：不耗体力");
-    }
-
-    private void OnOhkChanged(object sender, EventArgs e)
-    {
-        if (busy) return;
-        if (cbOhk.Checked) { SendNow(HK_OHK, "一击必杀"); nextOhk = DateTime.Now.AddSeconds(1.5); }
-        else Log("已停止：一击必杀");
-    }
-
     private void OnCarChanged(object sender, EventArgs e)
     {
         if (busy) return;
-        SendNow(HK_CAR, cbCar.Checked ? "载具耐久 开" : "载具耐久 关");
+        if (cbCar.Checked)
+        {
+            SendNow(HK_CAR, "载具耐久（底盘+引擎）");
+            chassisOn = true;
+            engineOn = true;
+            UpdateToggleLabels();
+        }
+        else
+        {
+            RunConsole("cheat-car-off", "载具耐久 关");
+            chassisOn = false;
+            engineOn = false;
+            UpdateToggleLabels();
+        }
+    }
+
+    private void OnNoBreakClick(object sender, EventArgs e) { RunConsole("cheat-nobreak", "武器永不损坏"); }
+    private void OnNoStamClick(object sender, EventArgs e) { RunConsole("cheat-nostam", "不耗体力 + 清疲劳"); }
+    private void OnOhkClick(object sender, EventArgs e) { RunConsole("cheat-ohk", "一击必杀"); }
+    private void OnMoraleClick(object sender, EventArgs e) { RunConsole("cheat-morale", "全体士气拉满"); }
+    private void OnZomboClick(object sender, EventArgs e) { RunConsole("cheat-zombo", "佐博点 +999"); }
+
+    private void OnChassisClick(object sender, EventArgs e)
+    {
+        chassisOn = !chassisOn;
+        RunConsole("cheat-chassis", chassisOn ? "底盘 开" : "底盘 关");
+        UpdateToggleLabels();
+    }
+
+    private void OnEngineClick(object sender, EventArgs e)
+    {
+        engineOn = !engineOn;
+        RunConsole("cheat-engine", engineOn ? "引擎 开" : "引擎 关");
+        UpdateToggleLabels();
+    }
+
+    private void UpdateToggleLabels()
+    {
+        btnChassis.Text = chassisOn ? "底盘：开" : "底盘：关";
+        btnEngine.Text = engineOn ? "引擎：开" : "引擎：关";
     }
 
     private void OnAll(object sender, EventArgs e)
@@ -505,28 +621,27 @@ public class DR2CTrainer : Form
         busy = true;
         cbRes.Checked = true;
         cbHeal.Checked = true;
-        cbNoBreak.Checked = true;
-        cbNoStam.Checked = true;
-        cbOhk.Checked = true;
-        bool carWasOff = !cbCar.Checked;
         cbCar.Checked = true;
+        chassisOn = true;
+        engineOn = true;
+        UpdateToggleLabels();
         busy = false;
-        if (carWasOff) SendNow(HK_CAR, "载具耐久 开");
-        Log("一键全开完成。");
+        SendNow(HK_ALL, "一键全开");
+        Log("一键全开已发送（不含佐博点）。");
     }
 
     private void OnStop(object sender, EventArgs e)
     {
         busy = true;
+        bool carWasOn = cbCar.Checked || chassisOn || engineOn;
         cbRes.Checked = false;
         cbHeal.Checked = false;
-        cbNoBreak.Checked = false;
-        cbNoStam.Checked = false;
-        cbOhk.Checked = false;
-        bool carWasOn = cbCar.Checked;
         cbCar.Checked = false;
+        chassisOn = false;
+        engineOn = false;
+        UpdateToggleLabels();
         busy = false;
-        if (carWasOn) SendNow(HK_CAR, "载具耐久 关");
+        if (carWasOn) RunConsole("cheat-car-off", "载具耐久 关");
         Log("已全部停止（已生效的效果保留到本次游戏结束）。");
     }
 
@@ -547,9 +662,6 @@ public class DR2CTrainer : Form
         DateTime now = DateTime.Now;
         if (cbRes.Checked && now >= nextRes) { nextRes = now.AddSeconds(2); SendPeriodic(HK_RES); }
         if (cbHeal.Checked && now >= nextHeal) { nextHeal = now.AddMilliseconds(400); SendPeriodic(HK_HEAL); }
-        if (cbNoBreak.Checked && now >= nextNoBreak) { nextNoBreak = now.AddSeconds(1.5); SendPeriodic(HK_NOBREAK); }
-        if (cbNoStam.Checked && now >= nextNoStam) { nextNoStam = now.AddMilliseconds(500); SendPeriodic(HK_NOSTAM); }
-        if (cbOhk.Checked && now >= nextOhk) { nextOhk = now.AddSeconds(1.5); SendPeriodic(HK_OHK); }
     }
 
     private void OnClosing(object sender, FormClosingEventArgs e)

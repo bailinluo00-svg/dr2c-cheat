@@ -1,5 +1,5 @@
 \ ============================================================
-\  DR2C CHEAT - hack.df  (v0.1.0)
+\  DR2C CHEAT - hack.df  (v0.1.1)
 \  Installed at: deathforth\hack\hack.df
 \  Loaded by boot.df via: load? hack/hack.df
 \
@@ -8,8 +8,16 @@
 \    pchar .thing@    = its THING   (has .wielded / .fatigue)
 \    weapondef{ <id> sel ... } selects a weapon definition
 \    LOOT_* / trunk.loot! / foreach-team-char are global
+\    untired          = clear the TIRED status of one character
+\    .stat@ / .stat+  = read / change a character stat (silent)
+\    gstats{ ... save } writes gstats.save (Zombo Points live there)
 \
-\  Effects are session-only: nothing here writes a save file.
+\  Hotkeys: Ctrl+0 all / Ctrl+1 resources / Ctrl+2 heal /
+\           Ctrl+3 car durability (chassis + engine).  4-9 are left free.
+\  Everything else is a panel button (sent through the game console).
+\
+\  Effects are session-only EXCEPT the Zombo Points grant, which is
+\  meant to be kept and therefore writes gstats.save on purpose.
 \  Deleting this file restores vanilla behaviour.
 \ ============================================================
 
@@ -40,10 +48,10 @@
     .thing@ weapondef{ dup .wielded sel 0 melee_break_scale! } drop
 ;
 : cheat-nobreak ' nobreak-one foreach-team-char ;
-' cheat-nobreak 3 hotkey!
 
-\ ---------- Ctrl+4 : no stamina (whole team) ----------
-\ Zero the weapon's stamina multiplier AND clear current fatigue.
+\ ---------- Ctrl+4 : no stamina + clear the TIRED status ----------
+\ Zero the weapon's stamina multiplier, clear current weapon fatigue,
+\ and clear the character TIRED status (MOD_TIRED) for the whole team.
 : nostam-one ( ch -- )
     dup .thing@ 0= if drop exit then
     .thing@
@@ -51,8 +59,10 @@
     weapondef{ dup .wielded sel 0 melee_fatigue_scale! }
     drop
 ;
-: cheat-nostam ' nostam-one foreach-team-char ;
-' cheat-nostam 4 hotkey!
+: cheat-nostam
+    ' nostam-one foreach-team-char
+    ' untired foreach-team-char
+;
 
 \ ---------- Ctrl+5 : one hit kill (whole team) ----------
 \ Weapon power drives the instakill roll: 2.5 PWR is about an
@@ -65,22 +75,25 @@
     drop
 ;
 : cheat-ohk ' ohk-one foreach-team-char ;
-' cheat-ohk 5 hotkey!
 
-\ ---------- Ctrl+6 : car indestructible ----------
-\ car-chassis / car-max-chassis and car-engine / car-max-engine are global
-\ values (carstats.df). Crashes, roadblocks and driving wear subtract from
-\ them (car-chassis+ / car-tune+), so we top both back up on the road tick and
-\ on every event state change / options draw.
-0 value veh-god?
+\ ---------- panel button : car chassis indestructible ----------
+\ car-chassis / car-max-chassis are global values (carstats.df).
+\ Crashes, roadblocks and driving wear subtract from them
+\ (car-chassis+ / car-tune+), so we top the chassis back up on the
+\ road tick and on every event state change / options draw.
+0 value veh-chassis?
+0 value veh-engine?
 
 : veh-guard
-    veh-god? if
+    veh-chassis? if
         car-max-chassis 8 < if 8 to car-max-chassis then
-        car-chassis car-max-chassis <
-        car-engine car-max-engine <
-        or if
+        car-chassis car-max-chassis < if
             car-max-chassis to car-chassis
+            car-update-display
+        then
+    then
+    veh-engine? if
+        car-engine car-max-engine < if
             car-max-engine to car-engine
             car-update-display
         then
@@ -127,29 +140,74 @@ last to main-event-do-info
 ;
 last to main-event-do-title
 
-: cheat-car
-    veh-god? not to veh-god?
-    veh-god? if
+: cheat-chassis
+    veh-chassis? not to veh-chassis?
+    veh-chassis? if
         car-max-chassis 8 < if 8 to car-max-chassis then
         car-max-chassis to car-chassis
-        car-max-engine to car-engine
         car-update-display
-        goodfx "CAR INDESTRUCTIBLE ON" msg
+        goodfx "CHASSIS INDESTRUCTIBLE ON" msg
     else
-        "CAR INDESTRUCTIBLE OFF" msg
+        "CHASSIS INDESTRUCTIBLE OFF" msg
     then
 ;
-' cheat-car 6 hotkey!
+
+\ ---------- panel button : car engine indestructible ----------
+: cheat-engine
+    veh-engine? not to veh-engine?
+    veh-engine? if
+        car-max-engine to car-engine
+        car-update-display
+        goodfx "ENGINE INDESTRUCTIBLE ON" msg
+    else
+        "ENGINE INDESTRUCTIBLE OFF" msg
+    then
+;
+
+\ ---------- Ctrl+3 : car durability, chassis + engine together ----------
+\ Idempotent: pressing it again keeps both guards on. Turning them off is
+\ done from the panel (cheat-car-off) or by the individual panel buttons.
+: cheat-car
+    veh-chassis? 0= if cheat-chassis then
+    veh-engine? 0= if cheat-engine then
+;
+: cheat-car-off
+    0 to veh-chassis?
+    0 to veh-engine?
+    "CAR DURABILITY OFF" msg
+;
+' cheat-car 3 hotkey!
+
+\ ---------- panel button : gain 999 Zombo Points ----------
+\ Zombo Points live in gstats.save, so this one is intentionally
+\ persistent. It bypasses ZOMBOP_CAP on purpose: the game explicitly
+\ allows spending points above the cap in the UNLOCKS menu.
+: cheat-zombo
+    gstats{ 999 ' zombo-point +! save }
+    goodfx "999 ZOMBO POINTS ADDED" msg
+;
+
+\ ---------- panel button : max out team morale ----------
+\ Raises the base morale stat of every team member to CHAR_STAT_MAX
+\ without printing the usual stat-change blurbs.
+: mormax-one ( ch -- )
+    dup STAT_MORALE swap .stat@
+    CHAR_STAT_MAX swap -
+    0 max
+    STAT_MORALE rot .stat+
+;
+: cheat-morale ' mormax-one foreach-team-char ;
 
 \ ---------- Ctrl+0 : everything at once ----------
+\ Zombo Points are deliberately left out: that is a one-shot grant that
+\ writes gstats.save, so it stays on its panel button only.
 : cheat-all
     cheat-res
     cheat-heal
     cheat-nobreak
     cheat-nostam
     cheat-ohk
-    veh-god? 0= if cheat-car then
+    cheat-morale
+    cheat-car
 ;
 ' cheat-all 0 hotkey!
-
-
