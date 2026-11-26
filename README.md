@@ -1,5 +1,7 @@
 # Death Road to Canada · 作弊 Trainer
 
+> 当前版本：**0.1.0** ｜ 适用游戏：**Death Road to Canada**（Steam 正式版，实测 JUN-20-2024.10.25）
+
 一款给单机游戏 **Death Road to Canada**（死亡之路，Steam 正式版）用的修改器。
 全部由 PowerShell 脚本 + 游戏自带的 `deathforth` 脚本引擎实现，**不注入进程、不修改存档**。
 

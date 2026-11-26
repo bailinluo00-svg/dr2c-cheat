@@ -93,7 +93,7 @@ public class DR2CTrainer : Form
 
     public DR2CTrainer()
     {
-        Text = "DR2C Trainer v1.9";
+        Text = "DR2C Trainer v0.1.0";
         ClientSize = new Size(400, 588);
         FormBorderStyle = FormBorderStyle.FixedSingle;
         MaximizeBox = false;

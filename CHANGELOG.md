@@ -1,0 +1,34 @@
+# Changelog
+
+本项目所有值得注意的变更都记录在此文件。
+
+格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
+
+## [0.1.0] - 2026-11-26
+
+首个公开正式版。
+
+### Added
+
+- 无限资源、全队回血、武器永不损坏、挥武器不耗体力、一击必杀、载具无限耐久六项功能
+- 热键 `Ctrl+1`~`Ctrl+6`，`Ctrl+0` 一键全开；换武器后重新按一次即可
+- WinForms 面板（C# 内嵌、内存编译），勾选后周期性自动重发
+- `install.bat` / `uninstall.bat` 安装与卸载，安装前自动备份存档到 `backup\`
+- `start-panel.bat` / `unblock.bat` 英文别名，保留中文原名 `启动面板.bat` / `解除锁定.bat`
+- Steam 库路径探测：读取注册表与 `libraryfolders.vdf`，逐项校验盘符与目录是否存在
+- `README.md`、`LICENSE`（MIT）、`.gitignore`、`.gitattributes`
+
+### Fixed
+
+- 安装 / 卸载脚本盲信 `libraryfolders.vdf` 的首个 `"path"`，遇到失效库路径（如没有 E: 盘）时找不到游戏
+- 面板「安装 / 更新 Mod」写入时未去除 UTF-8 BOM，带 BOM 的 `hack.df` 会被游戏解析器拒绝
+- 卸载时直接删除整个 `deathforth\hack`，可能误删其他 mod
+- 存档目录存在但为空时，安装备份步骤抛错并中断安装
+- 面板周期性发送热键阻塞 UI 线程，导致界面周期性卡顿
+- 窗口匹配对标题要求过严，游戏标题本地化后无法连接
+- 面板编译失败提示为乱码
+
+### Notes
+
+- 仅支持 Windows 与 Steam 正式版，实测版本 JUN-20-2024.10.25
+- 仅用于单机 / 离线模式，不修改存档，退出游戏即完全还原
